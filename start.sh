@@ -7,4 +7,5 @@ python -m spacy download en_core_web_sm -q || true
 export HF_HOME=/models DATA_DIR=/data PYTHONUNBUFFERED=1
 mkdir -p /models /data
 cd pipeline
-exec uvicorn server:app --host :: --port 8000
+# "::" for Salad's IPv6 gateway; fall back to IPv4 where IPv6 is unavailable
+uvicorn server:app --host :: --port 8000 || exec uvicorn server:app --host 0.0.0.0 --port 8000
