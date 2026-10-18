@@ -4,7 +4,7 @@ set -e
 apt-get update -qq && apt-get install -y -qq --no-install-recommends ffmpeg espeak-ng fonts-dejavu-core >/dev/null
 pip install -q --no-cache-dir -r requirements.txt
 python -m spacy download en_core_web_sm -q || true
-export HF_HOME=/models DATA_DIR=/data PYTHONUNBUFFERED=1
+export HF_HOME=/models DATA_DIR=/data PYTHONUNBUFFERED=1 CODE_REPO=eg250k-del/gh-demo-proj CODE_BRANCH=ccr-8f933243-klm29q
 mkdir -p /models /data
 cd pipeline
 # "::" for Salad's IPv6 gateway; fall back to IPv4 where IPv6 is unavailable

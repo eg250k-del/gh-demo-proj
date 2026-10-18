@@ -5,7 +5,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     HF_HOME=/models \
     DATA_DIR=/data \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,video \
+    CODE_REPO=eg250k-del/gh-demo-proj \
+    CODE_BRANCH=ccr-8f933243-klm29q
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ffmpeg espeak-ng fonts-dejavu-core \

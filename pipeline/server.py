@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse
 
 import images
+import render
 import run_episode
 import tts
 
@@ -54,21 +55,23 @@ def health():
 async def create(request: Request):
     episode = await request.json()
     job_id = uuid.uuid4().hex[:8]
+    (DATA / job_id).mkdir(parents=True, exist_ok=True)
+    (DATA / job_id / "episode.json").write_text(json.dumps(episode))
     jobs[job_id] = {"status": "queued", "log": []}
-
-    def work():
-        job = jobs[job_id]
-        with lock:
-            job["status"] = "running"
-            try:
-                run_episode.produce(episode, DATA / job_id, log=job["log"].append)
-                job["status"] = "done"
-            except Exception:  # noqa: BLE001
-                job["status"] = "error"
-                job["log"].append(traceback.format_exc())
-
-    threading.Thread(target=work, daemon=True).start()
+    threading.Thread(target=_work, args=(job_id, episode), daemon=True).start()
     return {"id": job_id}
+
+
+def _work(job_id: str, episode: dict):
+    job = jobs[job_id]
+    with lock:
+        job["status"] = "running"
+        try:
+            run_episode.produce(episode, DATA / job_id, log=job["log"].append)
+            job["status"] = "done"
+        except Exception:  # noqa: BLE001
+            job["status"] = "error"
+            job["log"].append(traceback.format_exc())
 
 
 @app.get("/jobs/{job_id}")
@@ -76,6 +79,56 @@ def status(job_id: str):
     if job_id not in jobs:
         raise HTTPException(404)
     return jobs[job_id]
+
+
+@app.post("/jobs/{job_id}/retry")
+def retry(job_id: str):
+    """Re-run a job in place; finished images/audio/shots on disk are reused."""
+    if job_id not in jobs:
+        raise HTTPException(404)
+    episode = json.loads((DATA / job_id / "episode.json").read_text())
+    jobs[job_id] = {"status": "queued", "log": []}
+    threading.Thread(target=_work, args=(job_id, episode), daemon=True).start()
+    return {"id": job_id}
+
+
+@app.get("/jobs/{job_id}/files/{name}")
+def job_file(job_id: str, name: str):
+    """Download intermediate results (shot images, shot videos) so nothing is lost if the node goes away."""
+    path = DATA / job_id / "work" / Path(name).name
+    if not path.exists():
+        raise HTTPException(404)
+    return FileResponse(path)
+
+
+@app.get("/jobs/{job_id}/files")
+def job_files(job_id: str):
+    work = DATA / job_id / "work"
+    return sorted(p.name for p in work.glob("*") if p.suffix in (".png", ".mp4", ".wav")) if work.exists() else []
+
+
+@app.post("/admin/update")
+def update_code():
+    """Pull the latest code from GitHub and hot-reload it, no restart, models stay in memory."""
+    import importlib, io, shutil, tarfile, tempfile, urllib.request
+    repo, branch = os.environ.get("CODE_REPO"), os.environ.get("CODE_BRANCH")
+    if not repo or not branch:
+        raise HTTPException(400, "CODE_REPO / CODE_BRANCH not set")
+    if lock.locked():
+        raise HTTPException(409, "a job is running")
+    data = urllib.request.urlopen(f"https://codeload.github.com/{repo}/tar.gz/refs/heads/{branch}").read()
+    with tempfile.TemporaryDirectory() as tmp:
+        tarfile.open(fileobj=io.BytesIO(data)).extractall(tmp)
+        src = next(Path(tmp).iterdir())
+        here = Path(__file__).parent
+        for f in (src / "pipeline").glob("*.py"):
+            shutil.copy(f, here / f.name)
+        for d in ("episodes", "assets"):
+            if (src / d).exists():
+                shutil.copytree(src / d, here.parent / d, dirs_exist_ok=True)
+    for mod in (render, tts, run_episode):  # images is not reloaded: keeps the loaded GPU pipeline
+        importlib.reload(mod)
+    return {"updated": True}
 
 
 @app.get("/jobs/{job_id}/video")
