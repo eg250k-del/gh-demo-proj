@@ -59,7 +59,7 @@ def main(cmd, *a):
             "container": {
                 **container,
                 "resources": {"cpu": 4, "memory": 16384, "gpu_classes": gpus, "storage_amount": 53687091200},
-                "priority": os.environ.get("SALAD_PRIORITY", "batch"),
+                "priority": os.environ.get("SALAD_PRIORITY", "medium"),
                 "environment_variables": {"APP_TOKEN": os.environ.get("APP_TOKEN", "")},
             },
             "networking": {"protocol": "http", "port": 8000, "auth": False},
