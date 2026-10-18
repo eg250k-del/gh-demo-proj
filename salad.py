@@ -3,6 +3,7 @@
     set SALAD_API_KEY=...      (Windows)   /  export SALAD_API_KEY=...  (Mac/Linux)
     python salad.py gpus                      list GPU classes and prices
     python salad.py create  ORG PROJECT DOCKERHUB_USER [GPU name, default "RTX 3090"]
+    python salad.py create  ORG PROJECT --from-github  [GPU]   no Docker Hub: boots from this repo
     python salad.py start   ORG PROJECT
     python salad.py status  ORG PROJECT       shows the public URL when it's running
     python salad.py stop    ORG PROJECT       STOP when done, billing continues while running
@@ -14,6 +15,9 @@ import urllib.request
 
 API = "https://api.salad.com/api/public"
 NAME = "manhwa-studio"
+REPO = "eg250k-del/gh-demo-proj"
+BRANCH = "ccr-8f933243-klm29q"
+BOOT_IMAGE = "docker.io/pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime"
 
 
 def call(method, path, body=None):
@@ -40,10 +44,18 @@ def main(cmd, *a):
         gpus = [g["id"] for g in call("GET", f"/organizations/{org}/gpu-classes")["items"] if want in g["name"].lower()]
         if not gpus:
             sys.exit(f"no GPU class matching '{want}', run: python salad.py gpus {org}")
+        container = {"image": f"docker.io/{user}/{NAME}:latest"}
+        if user == "--from-github":
+            # no registry needed: public pytorch image downloads this repo at boot and runs start.sh
+            url = f"https://codeload.github.com/{REPO}/tar.gz/refs/heads/{BRANCH}"
+            boot = (f"python -c \"import urllib.request,tarfile,io;"
+                    f"tarfile.open(fileobj=io.BytesIO(urllib.request.urlopen('{url}').read())).extractall('/src')\""
+                    f" && cd /src/*/ && bash start.sh")
+            container = {"image": BOOT_IMAGE, "command": ["bash", "-c", boot]}
         body = {
             "name": NAME,
             "container": {
-                "image": f"docker.io/{user}/{NAME}:latest",
+                **container,
                 "resources": {"cpu": 8, "memory": 30720, "gpu_classes": gpus, "storage_amount": 53687091200},
                 "environment_variables": {"APP_TOKEN": os.environ.get("APP_TOKEN", "")},
             },
