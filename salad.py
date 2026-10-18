@@ -2,7 +2,7 @@
 
     set SALAD_API_KEY=...      (Windows)   /  export SALAD_API_KEY=...  (Mac/Linux)
     python salad.py gpus                      list GPU classes and prices
-    python salad.py create  ORG PROJECT DOCKERHUB_USER [GPU name, default "RTX 3090"]
+    python salad.py create  ORG PROJECT DOCKERHUB_USER [comma-separated GPU class names]
     python salad.py create  ORG PROJECT --from-github  [GPU]   no Docker Hub: boots from this repo
     python salad.py start   ORG PROJECT
     python salad.py status  ORG PROJECT       shows the public URL when it's running
@@ -17,13 +17,15 @@ API = "https://api.salad.com/api/public"
 NAME = "manhwa-studio"
 REPO = "eg250k-del/gh-demo-proj"
 BRANCH = "ccr-8f933243-klm29q"
+# 12 GB+ VRAM classes, cheapest first; Salad picks whichever is free
+DEFAULT_GPUS = "RTX 3060 (12 GB),RTX 3080 Ti (12 GB),RTX 4070 (12 GB),RTX 3090 (24 GB),RTX 3090 Ti (24 GB),RTX A5000 (24 GB)"
 BOOT_IMAGE = "docker.io/pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime"
 
 
 def call(method, path, body=None):
     req = urllib.request.Request(
         API + path, method=method, data=json.dumps(body).encode() if body else None,
-        headers={"Salad-Api-Key": os.environ["SALAD_API_KEY"], "Content-Type": "application/json"})
+        headers={"Salad-Api-Key": os.environ["SALAD_API_KEY"], "Content-Type": "application/json", "User-Agent": "manhwa-studio/1.0"})
     with urllib.request.urlopen(req) as r:
         raw = r.read()
         return json.loads(raw) if raw else {}
@@ -40,10 +42,10 @@ def main(cmd, *a):
             print(g["id"], "|", g["name"], "|", g.get("prices", ""))
     elif cmd == "create":
         org, project, user = a[:3]
-        want = (a[3] if len(a) > 3 else "RTX 3090").lower()
-        gpus = [g["id"] for g in call("GET", f"/organizations/{org}/gpu-classes")["items"] if want in g["name"].lower()]
+        wants = [w.strip().lower() for w in (a[3] if len(a) > 3 else DEFAULT_GPUS).split(",")]
+        gpus = [g["id"] for g in call("GET", f"/organizations/{org}/gpu-classes")["items"] if g["name"].lower() in wants]
         if not gpus:
-            sys.exit(f"no GPU class matching '{want}', run: python salad.py gpus {org}")
+            sys.exit(f"no GPU class matching {wants}, run: python salad.py gpus {org}")
         container = {"image": f"docker.io/{user}/{NAME}:latest"}
         if user == "--from-github":
             # no registry needed: public pytorch image downloads this repo at boot and runs start.sh
@@ -56,7 +58,8 @@ def main(cmd, *a):
             "name": NAME,
             "container": {
                 **container,
-                "resources": {"cpu": 8, "memory": 30720, "gpu_classes": gpus, "storage_amount": 53687091200},
+                "resources": {"cpu": 4, "memory": 16384, "gpu_classes": gpus, "storage_amount": 53687091200},
+                "priority": os.environ.get("SALAD_PRIORITY", "batch"),
                 "environment_variables": {"APP_TOKEN": os.environ.get("APP_TOKEN", "")},
             },
             "networking": {"protocol": "http", "port": 8000, "auth": False},
