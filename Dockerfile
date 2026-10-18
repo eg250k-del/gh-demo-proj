@@ -1,3 +1,4 @@
+# Everything baked in (tools + models) so a Salad node starts working right after the image pull.
 FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -13,6 +14,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt \
     && python -m spacy download en_core_web_sm
+
+# models: Animagine XL (fp16 weights only), SDXL-Lightning LoRA, Kokoro voices
+RUN python -c "from huggingface_hub import snapshot_download, hf_hub_download; \
+snapshot_download('cagliostrolab/animagine-xl-3.1', allow_patterns=['*.json', '*.txt', '**/*.json', '**/*.txt', '*.safetensors', '**/*.safetensors'], ignore_patterns=['animagine-xl-3.1.safetensors']); \
+hf_hub_download('ByteDance/SDXL-Lightning', 'sdxl_lightning_8step_lora.safetensors'); \
+snapshot_download('hexgrad/Kokoro-82M')"
 
 COPY pipeline /app/pipeline
 COPY episodes /app/episodes
