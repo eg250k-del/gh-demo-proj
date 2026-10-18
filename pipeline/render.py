@@ -10,6 +10,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 W, H, FPS = 1920, 1080, 30
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 _encoder = None
+# older ffmpeg builds (e.g. 4.4) cannot negotiate sidechaincompress formats on their own
+AFMT = "aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"
 
 
 def run(cmd):
@@ -176,7 +178,8 @@ def finalize(shot_videos, total: float, cues, work: Path, out: Path, music: Path
     # music ducks under the voices (sidechain), subtitles burned in
     run(["ffmpeg", "-y", "-v", "error", "-i", str(joined), "-stream_loop", "-1", "-i", str(music),
          "-filter_complex",
-         "[0:a]asplit=2[voice][sc];[1:a]volume=0.35[m];[m][sc]sidechaincompress=threshold=0.03:ratio=6:release=400[duck];"
+         f"[0:a]{AFMT},asplit=2[voice][sc];[1:a]{AFMT},volume=0.35[m];"
+         "[m][sc]sidechaincompress=threshold=0.03:ratio=6:release=400[duck];"
          f"[voice][duck]amix=2:duration=first:normalize=0,alimiter=limit=0.95[a];[0:v]ass={ass}[v]",
          "-map", "[v]", "-map", "[a]", *encoder_args(), "-c:a", "aac", "-b:a", "192k",
          "-movflags", "+faststart", "-t", f"{total:.3f}", str(out)])
