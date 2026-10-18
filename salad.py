@@ -1,0 +1,70 @@
+"""Control the Salad container group from your PC (standard library only).
+
+    set SALAD_API_KEY=...      (Windows)   /  export SALAD_API_KEY=...  (Mac/Linux)
+    python salad.py gpus                      list GPU classes and prices
+    python salad.py create  ORG PROJECT DOCKERHUB_USER [GPU name, default "RTX 3090"]
+    python salad.py start   ORG PROJECT
+    python salad.py status  ORG PROJECT       shows the public URL when it's running
+    python salad.py stop    ORG PROJECT       STOP when done, billing continues while running
+"""
+import json
+import os
+import sys
+import urllib.request
+
+API = "https://api.salad.com/api/public"
+NAME = "manhwa-studio"
+
+
+def call(method, path, body=None):
+    req = urllib.request.Request(
+        API + path, method=method, data=json.dumps(body).encode() if body else None,
+        headers={"Salad-Api-Key": os.environ["SALAD_API_KEY"], "Content-Type": "application/json"})
+    with urllib.request.urlopen(req) as r:
+        raw = r.read()
+        return json.loads(raw) if raw else {}
+
+
+def base(org, project):
+    return f"/organizations/{org}/projects/{project}/containers/{NAME}"
+
+
+def main(cmd, *a):
+    if cmd == "gpus":
+        org = a[0] if a else input("organization name: ")
+        for g in call("GET", f"/organizations/{org}/gpu-classes")["items"]:
+            print(g["id"], "|", g["name"], "|", g.get("prices", ""))
+    elif cmd == "create":
+        org, project, user = a[:3]
+        want = (a[3] if len(a) > 3 else "RTX 3090").lower()
+        gpus = [g["id"] for g in call("GET", f"/organizations/{org}/gpu-classes")["items"] if want in g["name"].lower()]
+        if not gpus:
+            sys.exit(f"no GPU class matching '{want}', run: python salad.py gpus {org}")
+        body = {
+            "name": NAME,
+            "container": {
+                "image": f"docker.io/{user}/{NAME}:latest",
+                "resources": {"cpu": 8, "memory": 30720, "gpu_classes": gpus, "storage_amount": 53687091200},
+                "environment_variables": {"APP_TOKEN": os.environ.get("APP_TOKEN", "")},
+            },
+            "networking": {"protocol": "http", "port": 8000, "auth": False},
+            "replicas": 1,
+            "restart_policy": "always",
+            "autostart_policy": False,
+        }
+        print(json.dumps(call("POST", f"/organizations/{org}/projects/{project}/containers", body), indent=2))
+    elif cmd in ("start", "stop"):
+        call("POST", base(*a[:2]) + "/" + cmd)
+        print(cmd, "requested")
+    elif cmd == "status":
+        g = call("GET", base(*a[:2]))
+        print("status:", g["current_state"]["status"], "| instances:", g["current_state"].get("instance_status_counts"))
+        dns = g.get("networking", {}).get("dns")
+        if dns:
+            print("URL: https://" + dns + (f"/?token={os.environ['APP_TOKEN']}" if os.environ.get("APP_TOKEN") else ""))
+    else:
+        print(__doc__)
+
+
+if __name__ == "__main__":
+    main(*(sys.argv[1:] or ["help"]))

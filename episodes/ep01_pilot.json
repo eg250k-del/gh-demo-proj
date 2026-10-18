@@ -1,0 +1,141 @@
+{
+  "title": "The Zero-Star Hunter — Episode 1 (Pilot)",
+  "style": "manhwa style, korean webtoon, cel shading, dramatic lighting, cinematic composition, detailed background",
+  "negative": "nsfw, lowres, bad anatomy, bad hands, extra fingers, missing fingers, text, watermark, signature, speech bubble, blurry, jpeg artifacts, worst quality, low quality, deformed face",
+  "characters": {
+    "narrator": { "name": "Narrator", "voice": "bm_george", "look": "" },
+    "kai":      { "name": "Kai",      "voice": "am_michael", "look": "1boy, kai, 18 years old, messy white hair, sharp grey eyes, slim build, black school uniform with silver buttons" },
+    "drake":    { "name": "Drake",    "voice": "am_fenrir",  "look": "1boy, drake, tall muscular teenager, slicked back blond hair, arrogant smirk, red school uniform jacket open" },
+    "mira":     { "name": "Mira",     "voice": "af_heart",   "look": "1girl, mira, long black hair in high ponytail, blue eyes, black school uniform, silver hair clip" },
+    "examiner": { "name": "Examiner", "voice": "bm_lewis",   "look": "1man, middle aged examiner, grey military coat, scar across left eye, short dark hair" },
+    "system":   { "name": "System",   "voice": "af_nicole",  "look": "" }
+  },
+  "shots": [
+    {
+      "id": "s01",
+      "prompt": "wide shot, huge futuristic academy arena, hundreds of students in stands, glowing crystal pillar in center, blue sky, epic scale",
+      "chars": [],
+      "camera": "zoom_out",
+      "lines": [
+        { "speaker": "narrator", "text": "In this world, every child awakens a talent at eighteen. Your rank decides everything. Your school. Your job. Your life." }
+      ]
+    },
+    {
+      "id": "s02",
+      "prompt": "medium shot, standing in front of a glowing crystal pillar, hand on crystal, nervous expression, light reflecting on face",
+      "chars": ["kai"],
+      "camera": "zoom_in",
+      "lines": [
+        { "speaker": "narrator", "text": "Kai Ren. First in every exam. The pride of Class Three." }
+      ]
+    },
+    {
+      "id": "s03",
+      "prompt": "close up, crystal pillar flickering with dim grey light, giant letter F glowing faintly above it, gloomy",
+      "chars": [],
+      "camera": "shake",
+      "sfx": "impact",
+      "lines": [
+        { "speaker": "examiner", "text": "Kai Ren. Talent: Echo. Rank... F." }
+      ]
+    },
+    {
+      "id": "s04",
+      "prompt": "students in arena stands laughing and pointing, mocking expressions, crowd shot",
+      "chars": [],
+      "camera": "pan_right",
+      "lines": [
+        { "speaker": "narrator", "text": "The arena exploded with laughter." }
+      ]
+    },
+    {
+      "id": "s05",
+      "prompt": "medium close up, laughing arrogantly, pointing finger, looking down at viewer, arena background",
+      "chars": ["drake"],
+      "camera": "zoom_in",
+      "lines": [
+        { "speaker": "drake", "text": "An F rank? Top of the class, and you get the weakest talent in history? Ha! Go back to your books, nerd." }
+      ]
+    },
+    {
+      "id": "s06",
+      "prompt": "close up, head lowered, shadow over eyes, clenched fist, sad, rain-like light rays",
+      "chars": ["kai"],
+      "camera": "pan_up",
+      "lines": [
+        { "speaker": "kai", "text": "...Echo. A talent that only copies a skill for one second. One second." }
+      ]
+    },
+    {
+      "id": "s07",
+      "prompt": "medium shot, stepping forward protectively, angry glare, arms crossed, arena background",
+      "chars": ["mira"],
+      "camera": "pan_left",
+      "lines": [
+        { "speaker": "mira", "text": "Drake, that's enough. Kai, ignore them. A rank isn't everything." }
+      ]
+    },
+    {
+      "id": "s08",
+      "prompt": "night, small bedroom, sitting on bed alone, moonlight through window, holding a glowing blue screen in the air in front of him, surprised face",
+      "chars": ["kai"],
+      "camera": "zoom_in",
+      "sfx": "chime",
+      "system": ["[ SYSTEM AWAKENED ]", "Hidden Trait Detected: ECHO", "Copy time: 1 second", "Copies are PERMANENT"],
+      "lines": [
+        { "speaker": "system", "text": "Host confirmed. Hidden trait unlocked. Every skill you echo... is yours forever." }
+      ]
+    },
+    {
+      "id": "s09",
+      "prompt": "extreme close up on eyes, grey eyes glowing bright blue, determined, sparks of energy",
+      "chars": ["kai"],
+      "camera": "shake",
+      "sfx": "impact",
+      "lines": [
+        { "speaker": "kai", "text": "Forever? Then one second... is all I need." }
+      ]
+    },
+    {
+      "id": "s10",
+      "prompt": "next day, training ground, punching with fist covered in roaring red flames, fire explosion, dynamic action pose",
+      "chars": ["drake"],
+      "camera": "shake",
+      "sfx": "impact",
+      "lines": [
+        { "speaker": "drake", "text": "B rank! Flame Fist! Watch closely, trash, this is real power!" }
+      ]
+    },
+    {
+      "id": "s11",
+      "prompt": "action shot, catching a punch with one hand, his own hand now covered in blue flames, calm face, shockwave, debris flying",
+      "chars": ["kai"],
+      "camera": "shake",
+      "sfx": "impact",
+      "system": ["[ ECHO SUCCESS ]", "Skill Acquired: FLAME FIST (B)", "Status: Permanent"],
+      "lines": [
+        { "speaker": "system", "text": "Echo successful. Flame Fist acquired." },
+        { "speaker": "kai", "text": "Thanks for the lesson, Drake." }
+      ]
+    },
+    {
+      "id": "s12",
+      "prompt": "close up, shocked face, sweating, eyes wide, trembling, background speed lines",
+      "chars": ["drake"],
+      "camera": "zoom_in",
+      "lines": [
+        { "speaker": "drake", "text": "Wh... what? That's my skill! How do you have my skill?!" }
+      ]
+    },
+    {
+      "id": "s13",
+      "prompt": "low angle hero shot, standing tall, blue flames swirling around body, coat flowing in wind, sunset sky, epic",
+      "chars": ["kai"],
+      "camera": "pan_up",
+      "lines": [
+        { "speaker": "narrator", "text": "That day, they laughed at an F rank. They had no idea they were watching the birth of a monster." },
+        { "speaker": "narrator", "text": "To be continued." }
+      ]
+    }
+  ]
+}
